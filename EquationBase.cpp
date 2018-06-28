@@ -23,7 +23,7 @@ void EquationBase::setEps(double _eps)
 	eps = _eps;
 }
 
-//вычислеие машинного эпсилона
+//РІС‹С‡РёСЃР»РµРёРµ РјР°С€РёРЅРЅРѕРіРѕ СЌРїСЃРёР»РѕРЅР°
 double EquationBase::CalcMachEps()
 {
 	double res;
