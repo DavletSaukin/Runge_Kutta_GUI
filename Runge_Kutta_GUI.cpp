@@ -1,4 +1,4 @@
-#include <windows.h> 
+#include <windows.h>
 #include <sstream>
 
 #include "Equation_Y1.h"
@@ -9,37 +9,37 @@
 #define ID_BTN_1 1
 #define ID_BTN_2 2
 
-LONG WINAPI WndProc(HWND, UINT, WPARAM, LPARAM); // ôóíêöèÿ îáðàáîòêè ñîîáùåíèé îêíà
-BOOL CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM); //ôóíêöèÿ îáðàáîòêè ñîîáùåíèé äèàëîãà
+LONG WINAPI WndProc(HWND, UINT, WPARAM, LPARAM); // функция обработки сообщений окна
+BOOL CALLBACK DlgProc(HWND, UINT, WPARAM, LPARAM); //функция обработки сообщений диалога
 
 /*----------------
-Ñòàðòîâàÿ ôóíêöèÿ
+Стартовая функция
 -----------------*/
 int  PASCAL  WinMain(HINSTANCE  hInstance,
 	HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	HWND hwnd; // äåñêðèïòîð îêíà
-	MSG msg;   // ñòðóêòóðà ñîîáùåíèÿ
-	WNDCLASS w; // ñòðóêòóðà êëàññà îêíà
+	HWND hwnd; // дескриптор окна
+	MSG msg;   // структура сообщения
+	WNDCLASS w; // структура класса окна
 	RECT desctopRect;
 	GetWindowRect(GetDesktopWindow(), &desctopRect);
 	COLORREF backGroundColor = RGB(23, 72, 104);
-	memset(&w, 0, sizeof(WNDCLASS)); // î÷èñòêà ïàìÿòè äëÿ ñòðóêòóðû
+	memset(&w, 0, sizeof(WNDCLASS)); // очистка памяти для структуры
 	w.style = CS_HREDRAW | CS_VREDRAW;
 	w.lpfnWndProc = WndProc;
 	w.hInstance = hInstance;
 	w.hbrBackground = CreateSolidBrush(backGroundColor);
 	w.lpszClassName = "MyClass";
-	RegisterClass(&w); // ðåãèñòðàöèÿ êëàññà îêíà
-	// Ñîçäàíèå îêíà
+	RegisterClass(&w); // регистрация класса окна
+	// Создание окна
 	hwnd = CreateWindow("MyClass", "Runge_Kutta",
 		WS_OVERLAPPEDWINDOW,
 		desctopRect.left, desctopRect.top, desctopRect.right, desctopRect.bottom - 40,
 		NULL, NULL, hInstance, NULL);
-	ShowWindow(hwnd, nCmdShow); // îòîáðàæåíèå îêíà
-	UpdateWindow(hwnd);         // ïåðåðèñîâêà îêíà
+	ShowWindow(hwnd, nCmdShow); // отображение окна
+	UpdateWindow(hwnd);         // перерисовка окна
 
-	// Öèêë îáðàáîòêè ñîîáùåíèé
+	// Цикл обработки сообщений
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
@@ -48,7 +48,7 @@ int  PASCAL  WinMain(HINSTANCE  hInstance,
 }
 
 /*-------------------------
-Ôóíêöèÿ îáðàáîòêè ñîîáùåíèé
+Функция обработки сообщений
 --------------------------*/
 LONG WINAPI WndProc(HWND hwnd, UINT Message,
 	WPARAM wparam, LPARAM lparam)
@@ -57,9 +57,9 @@ LONG WINAPI WndProc(HWND hwnd, UINT Message,
 	PAINTSTRUCT ps;
 	HDC hdc;
 
-	static HWND hBtn1, hBtn2; // äåñêðèïòîðû êíîïîê
+	static HWND hBtn1, hBtn2; // дескрипторы кнопок
 
-	//Äåñêðèïòîðû ñòàòè÷åñêèõ ïîëåé íà÷àëüíûõ çíà÷åíèé
+	//Дескрипторы статических полей начальных значений
 	static HWND
 		hStaticXP_0,		//
 		hStaticX1_0,		//
@@ -75,7 +75,7 @@ LONG WINAPI WndProc(HWND hwnd, UINT Message,
 		hStatic_tfirst,		//
 		hStatic_tlast;		//
 
-	//Äåñêðèïòîðû ïîëåé ââîäà íà÷àëüíûõ çíà÷åíèé
+	//Дескрипторы полей ввода начальных значений
 	static HWND
 		hEditXP_0,		//
 		hEditX1_0,		//
@@ -95,32 +95,32 @@ LONG WINAPI WndProc(HWND hwnd, UINT Message,
 
 
 
-	static HWND hList1, hList2; // äåñêðèïòîðû ñïèñêîâ çíà÷åíèé ôóíêöèé
+	static HWND hList1, hList2; // дескрипторы списков значений функций
 	RECT rekt;
 
-	//Êîîðäèíàòû ýëåìåòîâ îêíà:
-	int ListY = 10,							//âûñîòà ñïèñêîâ çíà÷åíèé ôóêöèé
-		ListWidth = LOWORD(lparam) / 8,		//èõ øèðèíà
-		ListHeight = HIWORD(lparam),		//èõ âûñîòà
+	//Координаты элеметов окна:
+	int ListY = 10,							//высота списков значений фукций
+		ListWidth = LOWORD(lparam) / 8,		//их ширина
+		ListHeight = HIWORD(lparam),		//их высота
 
-		tauY = 10,							//Y-êîîðäèíàòà ïîëåé ââîäà òàó
+		tauY = 10,							//Y-координата полей ввода тау
 
-		tauStaticFirst_X = 400,				//X-êîîðäèíàòà ñòàòè÷åñêîãî ïîëÿ òàó ïåðâîãî
-		tauEditFirst_X = 450,				//X-êîîðäèíàòà ïîëÿ ââîäà òàó ïåðâîãî
+		tauStaticFirst_X = 400,				//X-координата статического поля тау первого
+		tauEditFirst_X = 450,				//X-координата поля ввода тау первого
 
-		tauStaticLast_X = 520,				//X-êîîðäèíàòà ñòàòè÷åñêîãî ïîëÿ òàó ïîñëåäíåãî
-		tauEditLast_X = 570,				//X-êîîðäèíàòà ïîëÿ ââîäà òàó ïîñëåäíåãî
+		tauStaticLast_X = 520,				//X-координата статического поля тау последнего
+		tauEditLast_X = 570,				//X-координата поля ввода тау последнего
 
 
-		initialValuesX = 450,				//X-êîîðäèíàòà ïîëåé ââîäà äðóãèõ íà÷àëüíûõ çíà÷åíèé 
-		initialValuesWidth = 60,			//øèðèíà ïîëåé ââîäà äðóãèõ íà÷àëüíûõ çíà÷åíèé
-		initialValuesHeight = 22,			//âûñîòà ïîëåé ââîäà äðóãèõ íà÷àëüíûõ çíà÷åíèé
+		initialValuesX = 450,				//X-координата полей ввода других начальных значений 
+		initialValuesWidth = 60,			//ширина полей ввода других начальных значений
+		initialValuesHeight = 22,			//высота полей ввода других начальных значений
 
-		initialValueStaticWidth = 50,		//øèðèíà ñòàòè÷åñêèõ ïîëåé íà÷àëüíûõ çíà÷åíèé
+		initialValueStaticWidth = 50,		//ширина статических полей начальных значений
 
-		initialValuesStaticX = 400,			//X-êîîðäèíàòà ñòàòè÷åñêèõ ïîëåé íà÷àëüíûõ çíà÷åíèé
+		initialValuesStaticX = 400,			//X-координата статических полей начальных значений
 
-		//Y-êîîðäèíàòû äëÿ ñîîòâåòñòâóþùèõ ïîëåé ââîäà
+		//Y-координаты для соответствующих полей ввода
 		XP_0_Ypos = 40,
 		X1_0_Ypos = 70,
 		YP_0_Ypos = 100,
@@ -135,11 +135,11 @@ LONG WINAPI WndProc(HWND hwnd, UINT Message,
 
 	switch (Message)
 	{
-	case WM_CREATE: // ñîîáùåíèå ñîçäàíèÿ îêíà
-		hInst = ((LPCREATESTRUCT)lparam)->hInstance; // äåñêðèïòîð ïðèëîæåíèÿ
+	case WM_CREATE: // сообщение создания окна
+		hInst = ((LPCREATESTRUCT)lparam)->hInstance; // дескриптор приложения
 		GetWindowRect(hwnd, &rekt);
 
-		//ñîçäàíèå ñïèñêîâ çíà÷åíèé ôóíêöèé
+		//создание списков значений функций
 		hList1 = CreateWindow("listbox", NULL, WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_USETABSTOPS, 
 			10, ListY, ListWidth, ListHeight, hwnd, (HMENU)ID_LIST, hInst, NULL);
 		ShowWindow(hList1, SW_SHOWNORMAL);
@@ -148,15 +148,15 @@ LONG WINAPI WndProc(HWND hwnd, UINT Message,
 			rekt.right / 6, ListY, ListWidth, ListHeight, hwnd, (HMENU)ID_LIST_2, hInst, NULL);
 		ShowWindow(hList2, SW_SHOWNORMAL);
 
-		//ñîçäàíèå êíîïîê
+		//создание кнопок
 
-		hBtn1 = CreateWindow("button", "Ðàññ÷èòàòü", WS_CHILD | WS_VISIBLE | WS_BORDER,
+		hBtn1 = CreateWindow("button", "Рассчитать", WS_CHILD | WS_VISIBLE | WS_BORDER,
 			400, 370, 120, 30, hwnd, (HMENU)ID_BTN_1, hInst, NULL);
 
-		hBtn2 = CreateWindow("button", "Cáðîñ", WS_CHILD | WS_VISIBLE | WS_BORDER,
+		hBtn2 = CreateWindow("button", "Cброс", WS_CHILD | WS_VISIBLE | WS_BORDER,
 			400, 410, 120, 30, hwnd, (HMENU)ID_BTN_2, hInst, NULL);
 
-		//ñòàòè÷åñêèå ïîëÿ íà÷àëüíûõ çà÷åíèé
+		//статические поля начальных зачений
 
 		hStatic_tfirst = CreateWindow("static", NULL, WS_CHILD | WS_VISIBLE | SS_RIGHT,
 			tauStaticFirst_X, tauY , initialValueStaticWidth, initialValuesHeight, hwnd, 0, hInst, NULL);
@@ -223,7 +223,7 @@ LONG WINAPI WndProc(HWND hwnd, UINT Message,
 		ShowWindow(hStatic_Ftrait, SW_SHOWNORMAL);
 		SetWindowText(hStatic_Ftrait, "~F=");
 
-		//ïîëÿ ââîäà íà÷àëüíûõ çíà÷åíèé
+		//поля ввода начальных значений
 		
 		hEdit_tfirst = CreateWindow("edit", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | ES_LEFT,
 			tauEditFirst_X, tauY, initialValuesWidth, initialValuesHeight, hwnd, 0, hInst, NULL);
@@ -281,14 +281,14 @@ LONG WINAPI WndProc(HWND hwnd, UINT Message,
 		InvalidateRect(hList1, NULL, TRUE);*/
 
 		break;
-	case WM_COMMAND:  // ñîîáùåíèå î êîìàíäå
-		// åñëè íàæàëè êíîïêó "Ðàññ÷èòàòü"
+	case WM_COMMAND:  // сообщение о команде
+		// если нажали кнопку "Рассчитать"
 		if (lparam == (LPARAM)hBtn1)
 		{
 			char* value = new char[7];
 			double initialValues[13];
 
-			//èçâëåêàåì çíà÷åèÿ èç êàæäîãî ïîëÿ ââîäà
+			//извлекаем значеия из каждого поля ввода
 			GetWindowText(hEdit_tfirst, value, 7);
 			initialValues[0] = std::stod(std::string(value));
 
@@ -328,15 +328,15 @@ LONG WINAPI WndProc(HWND hwnd, UINT Message,
 			GetWindowText(hEdit_Ftrait, value, 7);
 			initialValues[12] = std::stod(std::string(value));
 
-			//Ñîçäà¸ì îáúåêò êëàññà óðàâíåíèÿ. Ââîäèì íà÷àëüíûå çíà÷åíèÿ â êîíñòðóêòîð
+			//Создаём объект класса уравнения. Вводим начальные значения в конструктор
 			Equation_Y1 Y1(initialValues[2], initialValues[3], initialValues[4], initialValues[5], initialValues[6],
 				initialValues[7], initialValues[8], initialValues[9], initialValues[10], initialValues[11],
 				initialValues[12], initialValues[0], initialValues[1]);
 
-			//Ïðîâîäèì ðàñ÷¸òû
+			//Проводим расчёты
 			Y1.Calculation();
 
-			//Çàïîëíÿåì ñïèñêè ðåçóëüòàòàìè
+			//Заполняем списки результатами
 			for (size_t i = 0; i < Y1.XP.size(); i++)
 			{
 				std::string strbuf = std::to_string(Y1.XP[i]);
@@ -354,10 +354,10 @@ LONG WINAPI WndProc(HWND hwnd, UINT Message,
 			Y1.Y1.clear();
 			Y1.YP.clear();
 		}
-		// åñëè íàæàëè êíîïêó "Ñáðîñ"
+		// если нажали кнопку "Сброс"
 		if (lparam == (LPARAM)hBtn2)
 		{
-			//Óäàëÿåì äàííûå èç ñïèñêîâ
+			//Удаляем данные из списков
 			SendMessage(hList1, LB_RESETCONTENT, 0, 0L);
 			SendMessage(hList2, LB_RESETCONTENT, 0, 0L);
 		}
@@ -372,10 +372,10 @@ LONG WINAPI WndProc(HWND hwnd, UINT Message,
 			
 		}
 		break;
-	case WM_PAINT: // ïåðåðèñîâêà îêíà
-		hdc = BeginPaint(hwnd, &ps); // íà÷àëî ïåðåðèñîâêè
+	case WM_PAINT: // перерисовка окна
+		hdc = BeginPaint(hwnd, &ps); // начало перерисовки
 
-		EndPaint(hwnd, &ps); // êîíåö ïåðåðèñîâêè
+		EndPaint(hwnd, &ps); // конец перерисовки
 		break;
 	case WM_SIZE:
 		switch (wparam)
@@ -443,11 +443,11 @@ LONG WINAPI WndProc(HWND hwnd, UINT Message,
 		}
 		break;
 
-	case WM_DESTROY: // çàêðûòèå îêíà
+	case WM_DESTROY: // закрытие окна
 		PostQuitMessage(0);
 		break;
 
-	default: // îáðàáîòêà ñîîáùåíèÿ ïî óìîë÷àíèþ
+	default: // обработка сообщения по умолчанию
 		return DefWindowProc(hwnd, Message, wparam, lparam);
 	}
 	return 0;
