@@ -24,10 +24,10 @@ Equation_Y1::Equation_Y1(double &XP_0, double &X1_0, double &YP_0, double &Y1_0,
 
 Equation_Y1::~Equation_Y1()
 {
-	XP.~vector();
-	X1.~vector();
-	YP.~vector();
-	Y1.~vector();
+	XP.clear();
+	X1.clear();
+	YP.clear();
+	Y1.clear();
 }
 
 short int Equation_Y1::sign(double t)
